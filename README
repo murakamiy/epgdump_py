@@ -1,0 +1,34 @@
+python epgdump.py
+
+USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
+  -h, --help        print help message
+  -c, --channel-id  specify channel identifier
+  -f, --format      format xml
+  -i, --input       specify ts file
+  -o, --output      specify xml file
+
+--formatオプションを使用するよりも、xmlstarletコマンドを使用し
+た方がよい。
+xmlstarlet format XML_FILE
+
+番組検索用シェルスクリプト
+function select_time() {
+    xmlstarlet sel --encode utf-8 -t -m '//programme' -v '@start' -n $@ |
+    python -c '
+import datetime
+import sys
+for line in sys.stdin:
+    str = line.split()
+    if str:
+        print datetime.datetime.strptime(str[0], "%Y%m%d%H%M%S")'
+}
+function select_anime() {
+    xmlstarlet sel --encode utf-8 -t -m "//programme" \
+        -m "category[contains(., 'アニメ')]" \
+        -v 'normalize-space(../title)' -o '  ' -v '../@start' -n $@
+}
+function select_actor() {
+    xmlstarlet sel --encode utf-8 -t -m "//programme" \
+        -m "desc[contains(., '星野真里')]" \
+        -v 'normalize-space(../title)' -o '  ' -v '../@start' -n $@
+}
