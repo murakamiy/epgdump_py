@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-GAIJI_MAP = {
+GAIJI_MAP_TITLE = {
     0x7A50:"【HV】",
     0x7A51:"【SD】",
     0x7A52:"【Ｐ】",
@@ -18,8 +18,6 @@ GAIJI_MAP = {
     0x7A5D:"【SS】",
     0x7A5E:"【Ｂ】",
     0x7A5F:"【Ｎ】",
-    0x7A60:"■",
-    0x7A61:"●",
     0x7A62:"【天】",
     0x7A63:"【交】",
     0x7A64:"【映】",
@@ -37,6 +35,11 @@ GAIJI_MAP = {
     0x7A70:"【声】",
     0x7A71:"【吹】",
     0x7A72:"【PPV】",
+}
+
+GAIJI_MAP_OTHER = {
+    0x7A60:"■",
+    0x7A61:"●",
     0x7A73:"（秘）",
     0x7A74:"ほか",
 
@@ -457,3 +460,7 @@ GAIJI_MAP = {
     0x764A:"麴",
     0x764B:"麵",
 }
+
+GAIJI_MAP = {}
+GAIJI_MAP.update(GAIJI_MAP_TITLE)
+GAIJI_MAP.update(GAIJI_MAP_OTHER)

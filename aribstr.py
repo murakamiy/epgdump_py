@@ -182,6 +182,13 @@ class AribString:
         self.arib_array = AribArray('B', array)
         self.jis_array = AribArray('B')
         self.utf_buffer = StringIO.StringIO()
+        self.utf_buffer_symbol = StringIO.StringIO()
+        self.split_symbol = False
+    def convert_utf_split(self):
+        self.split_symbol = True
+        self.convert()
+        self.flush_jis_array()
+        return (self.utf_buffer.getvalue(), self.utf_buffer_symbol.getvalue())
     def convert_utf(self):
         self.convert()
         self.flush_jis_array()
@@ -226,8 +233,8 @@ class AribString:
         char2 = 0x0
         if size == 2:
             char2 = self.arib_array.pop0()
-        if data >= 0xA1 and data <= 0xFE:
-            char = data & 0x7F
+        if char >= 0xA1 and char <= 0xFE:
+            char = char & 0x7F
             char2 = char2 & 0x7F
         if code in (Code.KANJI, Code.JIS_KANJI_PLANE_1, Code.JIS_KANJI_PLANE_2):
             # 漢字コード出力
@@ -253,7 +260,15 @@ class AribString:
         elif code == Code.ADDITIONAL_SYMBOLS:
             # 追加シンボル文字コード出力
             self.flush_jis_array()
-            self.utf_buffer.write(GAIJI_MAP.get(((char << 8) + char2), "??"))
+            if self.split_symbol:
+                wchar = ((char << 8) + char2)
+                gaiji = GAIJI_MAP_TITLE.get(wchar)
+                if gaiji != None:
+                    self.utf_buffer_symbol.write(gaiji)
+                else:
+                    self.utf_buffer.write(GAIJI_MAP_OTHER.get(wchar, "??"))
+            else:
+                self.utf_buffer.write(GAIJI_MAP.get(((char << 8) + char2), "??"))
     def do_control(self, data):
         if   data == 0x0F:
             self.control.invoke(Buffer.G0, CodeArea.LEFT, True)  # LS0

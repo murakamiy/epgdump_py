@@ -50,11 +50,12 @@ def parseShortEventDescriptor(idx, event, t_packet, b_packet):
             chr(b_packet[idx + 4]))       # 24 bslbf
     event_name_length = b_packet[idx + 5] # 8 uimsbf
     arib = aribstr.AribString(b_packet[idx + 6:idx + 6 + event_name_length])
-    event_name = arib.convert_utf()
+    (event_name,symbol) = arib.convert_utf_split()
     idx = idx + 6 + event_name_length
     text_length = b_packet[idx]           # 8 uimsbf
     arib = aribstr.AribString(b_packet[idx + 1:idx + 1 + text_length])
     text = arib.convert_utf()
+    text = symbol + "\n" + text
     desc = ShortEventDescriptor(descriptor_tag, descriptor_length,
             ISO_639_language_code, event_name_length, event_name,
             text_length, text)
