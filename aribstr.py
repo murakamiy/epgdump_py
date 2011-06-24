@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 import array
 import sys
+import StringIO
+from aribgaiji import *
 # import copy
 
 class Code:
@@ -177,23 +179,22 @@ class AribArray(array.array):
 class AribString:
     def __init__(self, array):
         self.control = CodeSetController()
-#         self.debug_array = copy.deepcopy(array)
         self.arib_array = AribArray('B', array)
         self.jis_array = AribArray('B')
+        self.utf_buffer = StringIO.StringIO()
     def convert_utf(self):
         self.convert()
-        uni = 'UnicodeDecodeError'
-        try:
-            uni = unicode(self.jis_array.tostring(), 'iso-2022-jp').encode('utf-8')
-        except UnicodeDecodeError:
-            pass
-#             f = open('error_jis_array', 'w')
-#             self.jis_array.tofile(f)
-#             f.close()
-#             f = open('error_arib_array', 'w')
-#             self.debug_array.tofile(f)
-#             f.close()
-        return uni
+        self.flush_jis_array()
+        return self.utf_buffer.getvalue()
+    def flush_jis_array(self):
+        if len(self.jis_array) > 0:
+            uni = 'UnicodeDecodeError'
+            try:
+                uni = unicode(self.jis_array.tostring(), 'iso-2022-jp').encode('utf-8')
+            except UnicodeDecodeError:
+                pass
+            self.utf_buffer.write(uni)
+            self.jis_array = AribArray('B')
     def convert(self):
         while True:
             try:
@@ -222,13 +223,14 @@ class AribString:
     def do_convert(self, data):
         (code, size) = self.control.get_current_code(data)
         char = data
+        char2 = 0x0
+        if size == 2:
+            char2 = self.arib_array.pop0()
         if data >= 0xA1 and data <= 0xFE:
             char = data & 0x7F
+            char2 = char2 & 0x7F
         if code in (Code.KANJI, Code.JIS_KANJI_PLANE_1, Code.JIS_KANJI_PLANE_2):
             # 漢字コード出力
-            char2 = self.arib_array.pop0()
-            if data >= 0xA1 and data <= 0xFE:
-                char2 = data & 0x7F
             self.jis_array.append_str(ESC_SEQ_ZENKAKU, char, char2)
         elif code in (Code.ALPHANUMERIC, Code.PROP_ALPHANUMERIC):
             # 英数字コード出力
@@ -249,8 +251,9 @@ class AribString:
             # 半角カタカナコード出力
             self.jis_array.append_str(ESC_SEQ_HANKAKU, char)
         elif code == Code.ADDITIONAL_SYMBOLS:
-            # 追加シンボル文字コード 未対応 ? を出力
-            self.jis_array.append_str(ESC_SEQ_ASCII, 0x3F)
+            # 追加シンボル文字コード出力
+            self.flush_jis_array()
+            self.utf_buffer.write(GAIJI_MAP.get(((char << 8) + char2), "??"))
     def do_control(self, data):
         if   data == 0x0F:
             self.control.invoke(Buffer.G0, CodeArea.LEFT, True)  # LS0
