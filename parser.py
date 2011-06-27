@@ -232,25 +232,29 @@ def parse_section(header, section_map, b_packet):
     if header.payload_unit_start_indicator == 1:
         if sect.length_total == 0:
             section_length = 180
-            sect.idx += header.pointer_field
-            section_length -= header.pointer_field
-            sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
-            if sect.length_total == section_length:
-                sect.data.extend(b_packet[sect.idx:])
-                next_packet = False
-            elif sect.length_total < section_length:
-                sect.data.extend(b_packet[sect.idx:sect.idx + 3 + sect.length_total])
-                sect.idx += sect.length_total + 3
-                sect.length_current += sect.length_total
-                section_map[header.pid] = sect
-                next_packet = False
-            else:
-                sect.data.extend(b_packet[sect.idx:])
-                sect.length_current += section_length
-                sect.idx = 5
-                section_map[header.pid] = sect
+            if header.pointer_field > 179:
                 next_packet = True
                 sect = None
+            else:
+                sect.idx += header.pointer_field
+                section_length -= header.pointer_field
+                sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
+                if sect.length_total == section_length:
+                    sect.data.extend(b_packet[sect.idx:])
+                    next_packet = False
+                elif sect.length_total < section_length:
+                    sect.data.extend(b_packet[sect.idx:sect.idx + 3 + sect.length_total])
+                    sect.idx += sect.length_total + 3
+                    sect.length_current += sect.length_total
+                    section_map[header.pid] = sect
+                    next_packet = False
+                else:
+                    sect.data.extend(b_packet[sect.idx:])
+                    sect.length_current += section_length
+                    sect.idx = 5
+                    section_map[header.pid] = sect
+                    next_packet = True
+                    sect = None
         else:
             remain = sect.length_total - sect.length_current
             section_length = 180 - sect.length_prev
