@@ -233,6 +233,7 @@ def parse_section(header, section_map, b_packet):
         if sect.length_total == 0:
             section_length = 180
             if header.pointer_field > 179:
+                print 'section 01 header.pointer_field > 179'
                 next_packet = True
                 sect = None
             else:
@@ -240,33 +241,43 @@ def parse_section(header, section_map, b_packet):
                 section_length -= header.pointer_field
                 sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
                 if sect.length_total == section_length:
-                    sect.data.extend(b_packet[sect.idx:])
+                    sect.data.extend(b_packet[sect.idx:sect.idx + 3 + sect.length_total])
+                    sect.idx += sect.length_total + 3
+                    sect.length_current += sect.length_total
+                    section_map[header.pid] = sect
+                    print 'section 02 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     next_packet = False
                 elif sect.length_total < section_length:
                     sect.data.extend(b_packet[sect.idx:sect.idx + 3 + sect.length_total])
                     sect.idx += sect.length_total + 3
                     sect.length_current += sect.length_total
                     section_map[header.pid] = sect
+                    print 'section 03 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     next_packet = False
                 else:
                     sect.data.extend(b_packet[sect.idx:])
                     sect.length_current += section_length
                     sect.idx = 5
                     section_map[header.pid] = sect
+                    print 'section 04 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     next_packet = True
                     sect = None
         else:
             remain = sect.length_total - sect.length_current
             section_length = 180 - sect.length_prev
             if remain == section_length:
-                sect.data.extend(b_packet[sect.idx:])
-                section_map[header.pid] = Section()
+                sect.data.extend(b_packet[sect.idx:sect.idx + 3 + remain])
+                sect.idx += remain
+                sect.length_current += remain
+                section_map[header.pid] = sect
+                print 'section 05 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                 next_packet = False
             elif remain > 0 and remain < section_length:
                 sect.data.extend(b_packet[sect.idx:sect.idx + 3 + remain])
                 sect.idx += remain
                 sect.length_current += remain
                 section_map[header.pid] = sect
+                print 'section 06 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                 next_packet = False
             elif remain == 0:
                 next_packet = True
@@ -283,6 +294,7 @@ def parse_section(header, section_map, b_packet):
                         sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
                         section_map[header.pid] = sect
                         next_packet = False
+                print 'section 07 %04i %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain, sect.length_prev)
                 sect = None
             else:
                 sect.data.extend(b_packet[sect.idx:])
@@ -290,6 +302,7 @@ def parse_section(header, section_map, b_packet):
                 sect.length_prev = 0
                 sect.idx = 5
                 section_map[header.pid] = sect
+                print 'section 08 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                 next_packet = True
                 sect = None
     else:
@@ -299,13 +312,16 @@ def parse_section(header, section_map, b_packet):
             sect.length_current += 184
             if sect.length_current >= sect.length_total:
                 section_map[header.pid] = Section()
+                print 'section 09 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                 next_packet = False
             else:
                 sect.length_prev = 0
+                print 'section 10 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                 sect = None
                 next_packet = True
         else:
             sect.length_prev = 0
+            print 'section 11 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
             sect = None
             next_packet = True
     return (next_packet, sect)
@@ -321,9 +337,12 @@ def parse_eit(service_id, tsfile):
     # Event Information Table
     event_map = {}
     section_map = {}
+    i = 0
     for b_packet in tsfile:
         header = parse_header(b_packet)
         if header.pid in EIT_PID and header.adaptation_field_control == 1:
+            i += 1
+            print '\neit 1 0x%X %04i' % (header.pid, i)
             (next_packet, section) = parse_section(header, section_map, b_packet)
             while not next_packet:
                 if section:
@@ -333,9 +352,12 @@ def parse_eit(service_id, tsfile):
                         print 'CRC32MpegError', e
                         section_map.pop(header.pid)
                         break
+                    print 'service_id %i %i' % (service_id, t_packet.eit.service_id)
                     if t_packet.eit.service_id == service_id:
                         parseEvents(t_packet, section.data)
                         add_event(event_map, t_packet)
+                i += 1
+                print '\neit 2 0x%X %04i' % (header.pid, i)
                 (next_packet, section) = parse_section(header, section_map, b_packet)
     event_list = event_map.values()
     event_list.sort(compare)
