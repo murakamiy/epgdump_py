@@ -131,12 +131,53 @@ def parseServiceDescriptor(idx, service, t_packet, b_packet):
             service_name_length, service_name)
     service.descriptors.append(sd)
 
+def parseDataContentDescriptor(idx, service, t_packet, b_packet):
+    descriptor_tag = b_packet[idx]        # 8 uimsbf
+    descriptor_length = b_packet[idx + 1] # 8 uimsbf
+    data_component_id = (b_packet[idx + 2] << 8) + b_packet[idx + 3] # 16 uimsbf
+    if data_component_id != 0x0015:
+        return
+    print '%04X' % data_component_id
+    entry_component = b_packet[idx + 4]     # 8 uimsbf
+    selector_length = b_packet[idx + 5]     # 8 uimsbf
+    start_time_offset = bcd2time(b_packet[idx + 6:idx + 9]) # 24 bslbf
+    end_time_offset = bcd2time(b_packet[idx + 9:idx + 12])  # 24 bslbf
+    version_updating_indicator = (b_packet[12] >> 7) # 1 bslbf
+    interim_version_indicator = ((b_packet[12] >> 6) & 0x1)   # 1 bslbf
+    # reseved 6 bslbf
+    index_version = ((b_packet[13] << 8) + b_packet[14]) # 16 uimsbf
+    cycle_time = bcd2time(b_packet[idx + 15:idx + 18])   # 32 uimsbf
+    # reserved 2 bslbf
+    leak_rate = ((b_packet[19] & 0x3F) << 16) + (b_packet[20] << 8) + b_packet[21] # 22 uimsbf
+    table_size = (b_packet[22] << 24) + (b_packet[23] << 16) + (b_packet[24] << 8) + b_packet[25] # 32 uimsbf
+    selector = IndexTransmissionInfo(start_time_offset, end_time_offset,
+            version_updating_indicator, interim_version_indicator, index_version,
+            cycle_time, leak_rate, table_size)
+    idx = idx + 6 + selector_length
+    num_of_component_ref = b_packet[idx]    # 8 uimsbf
+    component_ref = b_packet[idx + 1:idx + 1 + num_of_component_ref] # 8 uimsbf
+    idx = idx + 1 + num_of_component_ref
+    ISO_639_language_code = (
+            chr(b_packet[idx]) +
+            chr(b_packet[idx + 1]) +
+            chr(b_packet[idx + 2]))       # 24 bslbf
+    text_length = b_packet[idx + 3]       # 8 uimsbf
+    arib = aribstr.AribString(b_packet[idx + 3:idx + 3 + text_length])
+    text = arib.convert_utf()
+    desc = DataContentDescriptor(descriptor_tag, descriptor_length, data_component_id,
+            entry_component, selector_length, selector, num_of_component_ref,
+            component_ref, ISO_639_language_code, text_length, text)
+    service.descriptors.append(desc)
+
 def parseDescriptors(idx, table, t_packet, b_packet):
     iface = {
             TAG_SED:parseShortEventDescriptor,
             TAG_EED:parseExtendedEventDescriptor,
             TAG_CD :parseContentDescriptor,
             TAG_SD :parseServiceDescriptor}
+
+#     iface = {TAG_DCD:parseDataContentDescriptor}
+
     length = idx + table.descriptors_loop_length
     while idx < length:
         descriptor_tag = b_packet[idx]        # 8   uimsbf

@@ -201,6 +201,74 @@ class Event:
             self.free_CA_mode,
             self.descriptors_loop_length)
 
+class DataContentDescriptor:
+    def __init__(self, descriptor_tag, descriptor_length, data_component_id,
+            entry_component, selector_length, selector, num_of_component_ref,
+            component_ref, ISO_639_language_code, text_length, text):
+        self.descriptor_tag = descriptor_tag       # 8 uimsbf
+        self.descriptor_length = descriptor_length # 8 uimsbf
+        self.data_component_id = data_component_id # 16 uimsbf
+        self.entry_component = entry_component     # 8 uimsbf
+        self.selector_length = selector_length     # 8 uimsbf
+        self.selector = selector
+        self.num_of_component_ref = num_of_component_ref   # 8 uimsbf
+        self.component_ref = component_ref                 # 8 uimsbf
+        self.ISO_639_language_code = ISO_639_language_code # 24 bslbf
+        self.text_length = text_length                     # 8 uimsbf
+        self.text = text
+    def __str__(self):
+        return (
+        '   descriptor_tag=0x%02X\n'
+        '   descriptor_length=%i\n'
+        '   data_component_id=%04X\n'
+        '   entry_component=%i\n'
+        '   selector_length=%i\n'
+        '   num_of_component_ref=%i\n'
+        '   ISO_639_language_code=%s\n'
+        '   text_length=%i\n'
+        '   text=%s\n') % (
+                self.descriptor_tag,
+                self.descriptor_length,
+                self.data_component_id,
+                self.entry_component,
+                self.selector_length,
+                self.num_of_component_ref,
+                self.ISO_639_language_code,
+                self.text_length,
+                self.text)
+
+class IndexTransmissionInfo:
+    def __init__(self, start_time_offset, end_time_offset, version_updating_indicator,
+            interim_version_indicator, index_version, cycle_time, leak_rate, table_size):
+        self.start_time_offset = start_time_offset # 24 bslbf
+        self.end_time_offset = end_time_offset     # 24 bslbf
+        self.version_updating_indicator = version_updating_indicator # 1 bslbf
+        self.interim_version_indicator = interim_version_indicator   # 1 bslbf
+        # reseved 6 bslbf
+        self.index_version = index_version # 16 uimsbf
+        self.cycle_time = cycle_time       # 32 uimsbf
+        # reserved 2 bslbf
+        self.leak_rate = leak_rate         # 22 uimsbf
+        self.table_size = table_size       # 32 uimsbf
+    def __str__(self):
+        return (
+        '    start_time_offset=%s\n'
+        '    end_time_offset=%s\n'
+        '    version_updating_indicator=%i\n'
+        '    interim_version_indicator=%i\n'
+        '    index_version=%i\n'
+        '    cycle_time=%s\n'
+        '    leak_rate=%i\n'
+        '    table_size=%i\n') % (
+                self.start_time_offset,
+                self.end_time_offset,
+                self.version_updating_indicator,
+                self.interim_version_indicator,
+                self.index_version,
+                self.cycle_time,
+                self.leak_rate,
+                self.table_size)
+
 class ContentDescriptor:
     def __init__(self, descriptor_tag, descriptor_length, content_type_array):
         self.descriptor_tag = descriptor_tag
