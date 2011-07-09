@@ -237,22 +237,28 @@ def parse_section(header, section_map, b_packet):
                 next_packet = True
                 sect = None
             else:
+#                 if header.pointer_field > 0:
+#                     print 'pointer_field %i' % header.pointer_field
                 sect.idx += header.pointer_field
                 section_length -= header.pointer_field
                 sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
-                if sect.length_total <= section_length:
+                if sect.length_total < 15:
+#                     print 'section 02 section_length < 15'
+                    next_packet = True
+                    sect = None
+                elif sect.length_total <= section_length:
                     sect.data.extend(b_packet[sect.idx:sect.idx + 3 + sect.length_total])
                     sect.idx += sect.length_total + 3
                     sect.length_current += sect.length_total
                     section_map[header.pid] = sect
-#                     print 'section 02 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
+#                     print 'section 03 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     next_packet = False
                 else:
                     sect.data.extend(b_packet[sect.idx:])
                     sect.length_current += section_length
                     sect.idx = 5
                     section_map[header.pid] = sect
-#                     print 'section 03 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
+#                     print 'section 04 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     next_packet = True
                     sect = None
         else:
@@ -273,14 +279,14 @@ def parse_section(header, section_map, b_packet):
                         sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
                         section_map[header.pid] = sect
                         next_packet = False
-#                 print 'section 04 %04i %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain, sect.length_prev)
+#                 print 'section 05 %04i %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain, sect.length_prev)
                 sect = None
             elif remain <= section_length:
                 sect.data.extend(b_packet[sect.idx:sect.idx + 3 + remain])
                 sect.idx += remain
                 sect.length_current += remain
                 section_map[header.pid] = sect
-#                 print 'section 05 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
+#                 print 'section 06 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                 next_packet = False
             else:
                 sect.data.extend(b_packet[sect.idx:])
@@ -288,7 +294,7 @@ def parse_section(header, section_map, b_packet):
                 sect.length_prev = 0
                 sect.idx = 5
                 section_map[header.pid] = sect
-#                 print 'section 06 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
+#                 print 'section 07 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                 next_packet = True
                 sect = None
     else:
@@ -298,16 +304,16 @@ def parse_section(header, section_map, b_packet):
             sect.length_current += 184
             if sect.length_current >= sect.length_total:
                 section_map[header.pid] = Section()
-#                 print 'section 07 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
+#                 print 'section 08 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                 next_packet = False
             else:
                 sect.length_prev = 0
-#                 print 'section 08 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
+#                 print 'section 09 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                 sect = None
                 next_packet = True
         else:
             sect.length_prev = 0
-#             print 'section 09 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
+#             print 'section 10 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
             sect = None
             next_packet = True
     return (next_packet, sect)
