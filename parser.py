@@ -135,9 +135,9 @@ def parseDataContentDescriptor(idx, service, t_packet, b_packet):
     descriptor_tag = b_packet[idx]        # 8 uimsbf
     descriptor_length = b_packet[idx + 1] # 8 uimsbf
     data_component_id = (b_packet[idx + 2] << 8) + b_packet[idx + 3] # 16 uimsbf
+    print '%04X' % data_component_id
     if data_component_id != 0x0015:
         return
-    print '%04X' % data_component_id
     entry_component = b_packet[idx + 4]     # 8 uimsbf
     selector_length = b_packet[idx + 5]     # 8 uimsbf
     start_time_offset = bcd2time(b_packet[idx + 6:idx + 9]) # 24 bslbf
@@ -170,13 +170,13 @@ def parseDataContentDescriptor(idx, service, t_packet, b_packet):
     service.descriptors.append(desc)
 
 def parseDescriptors(idx, table, t_packet, b_packet):
-    iface = {
-            TAG_SED:parseShortEventDescriptor,
-            TAG_EED:parseExtendedEventDescriptor,
-            TAG_CD :parseContentDescriptor,
-            TAG_SD :parseServiceDescriptor}
+#     iface = {
+#             TAG_SED:parseShortEventDescriptor,
+#             TAG_EED:parseExtendedEventDescriptor,
+#             TAG_CD :parseContentDescriptor,
+#             TAG_SD :parseServiceDescriptor}
 
-#     iface = {TAG_DCD:parseDataContentDescriptor}
+    iface = {TAG_DCD:parseDataContentDescriptor}
 
     length = idx + table.descriptors_loop_length
     while idx < length:

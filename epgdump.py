@@ -44,7 +44,7 @@ if channel_id == None or input_file == None or output_file == None:
 tsfile = TransportStreamFile(input_file, 'rb')
 (service, events) = parse_ts(tsfile)
 tsfile.close()
-xmltv.create_xml(channel_id, service, events, output_file, pretty_print)
+# xmltv.create_xml(channel_id, service, events, output_file, pretty_print)
 
 # print service
 # for desc in service.descriptors:
