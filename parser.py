@@ -325,12 +325,17 @@ def parse_header(b_packet):
     pointer_field = b_packet[4]
     return TransportPacketHeader(pid, payload_unit_start_indicator, adaptation_field_control, pointer_field)
 
-def parse_eit(service_id, tsfile):
+def parse_eit(service_id, tsfile, debug):
     # Event Information Table
     event_map = {}
     section_map = {}
+    counter = 0
 #     i = 0
     for b_packet in tsfile:
+        counter += 1
+        if not debug:
+            if counter >= 700000:
+                break
         header = parse_header(b_packet)
         if header.pid in EIT_PID and header.adaptation_field_control == 1:
 #             i += 1
@@ -354,6 +359,8 @@ def parse_eit(service_id, tsfile):
     event_list = event_map.values()
     event_list.sort(compare)
     event_list = fix_events(event_list)
+    if debug:
+        print '%i packets read' % (counter)
     return event_list
 
 def compare(x, y):
@@ -376,8 +383,8 @@ def parse_sdt(tsfile):
             break
     return sdt_map[min(sdt_map.keys())]
 
-def parse_ts(tsfile):
+def parse_ts(tsfile, debug):
     service = parse_sdt(tsfile)
     tsfile.seek(0)
-    events = parse_eit(service.service_id, tsfile)
+    events = parse_eit(service.service_id, tsfile, debug)
     return (service, events)
