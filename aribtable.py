@@ -21,7 +21,8 @@ class TransportPacketHeader:
 class TransportPacket:
     def __init__(self, header, packet):
         self.header = header
-        if header.pid == SDT_PID:
+        self.binary_data = packet
+        if header.pid in SDT_PID:
             self.sdt = ServiceDescriptionTable(packet)
         else:
             self.eit = EventInfomationTable(packet)

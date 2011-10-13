@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 EIT_PID = (0x12, 0x26, 0x27)
-SDT_PID = 0x11
+SDT_PID = (0x11,)
 
 TAG_SED = 0x4D # Short event descriptor
 TAG_EED = 0x4E # Extended event descriptor
