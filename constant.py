@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+READ_PACKETS_MAX = 700000
 EIT_PID = (0x12, 0x26, 0x27)
 SDT_PID = (0x11,)
 

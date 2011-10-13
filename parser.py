@@ -41,7 +41,7 @@ class TransportPacketParser:
             b_packet = self.tsfile.next()
             self.count += 1
             if not self.debug:
-                if self.count >= 700000:
+                if self.count >= READ_PACKETS_MAX:
                     raise StopIteration
             header = self.parse_header(b_packet)
             if header.pid in self.pid and header.adaptation_field_control == 1:
