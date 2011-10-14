@@ -175,8 +175,9 @@ class EventInfomationTable:
             self.last_table_id)
 
 class Event:
-    def __init__(self, event_id, start_time, duration,
+    def __init__(self, service_id, event_id, start_time, duration,
             running_status, free_CA_mode, descriptors_loop_length):
+        self.service_id = service_id
         self.event_id = event_id
         self.start_time = start_time
         self.duration = duration
@@ -189,6 +190,7 @@ class Event:
         self.desc_extend = None
     def __str__(self):
         return (
+        '  service_id=%i\n'
         '  event_id=%04X\n'
         '  start_time=%s\n'
         '  duration=%s\n'

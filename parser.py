@@ -292,7 +292,7 @@ def parseEvents(t_packet, b_packet):
         running_status = (b_packet[idx + 10] >> 5)            # 3   uimsbf
         free_CA_mode = ((b_packet[idx + 10] >> 4) & 0x01)     # 1   bslbf
         descriptors_loop_length = ((b_packet[idx + 10] & 0x0F) << 8) + b_packet[idx + 11] # 12  uimsbf
-        event = Event(event_id, start_time, duration,
+        event = Event(t_packet.eit.service_id, event_id, start_time, duration,
                 running_status, free_CA_mode, descriptors_loop_length)
         parseDescriptors(idx + 12, event, t_packet, b_packet)
         t_packet.eit.events.append(event)
@@ -361,38 +361,49 @@ def fix_events(events):
         event_list.append(event)
     return event_list
 
-def compare(x, y):
-    return int((x.start_time - y.start_time).total_seconds())
+def compare_event(x, y):
+        return int((x.start_time - y.start_time).total_seconds())
 
-def parse_eit(service_id, tsfile, debug):
+def compare_service(x, y):
+    service_id = x.service_id - y.service_id
+    if service_id == 0:
+        return int((x.start_time - y.start_time).total_seconds())
+    else:
+        return service_id
+
+def parse_eit(b_type, service, tsfile, debug):
     # Event Information Table
+    ids = service.keys()
     event_map = {}
     parser = TransportPacketParser(tsfile, EIT_PID, debug)
     for t_packet in parser:
-        if t_packet.eit.service_id == service_id:
+        if t_packet.eit.service_id in ids:
             parseEvents(t_packet, t_packet.binary_data)
             add_event(event_map, t_packet)
-
     print "EIT: %i packets read" % (parser.count)
     event_list = event_map.values()
-    event_list.sort(compare)
+    event_list.sort(compare_event if b_type == TYPE_DEGITAL else compare_service)
     event_list = fix_events(event_list)
     return event_list
 
-def parse_sdt(tsfile, debug):
+def parse_sdt(b_type, tsfile, debug):
     # Service Description Table
     service_map = {}
     parser = TransportPacketParser(tsfile, SDT_PID, debug)
     for t_packet in parser:
         parseService(t_packet, t_packet.binary_data)
         for service in t_packet.sdt.services:
-            service_map[service.service_id] = service
-        break
+            if ( service.EIT_schedule_flag == 1 and
+                 service.EIT_present_following_flag == 1 and
+                 service.descriptors[0].service_type == 0x01):
+                service_map[service.service_id] = service.descriptors[0].service_name
+        if b_type == TYPE_DEGITAL:
+            break
     print "SDT: %i packets read" % (parser.count)
-    return service_map[min(service_map.keys())]
+    return service_map
 
-def parse_ts(tsfile, debug):
-    service = parse_sdt(tsfile, debug)
+def parse_ts(b_type, tsfile, debug):
+    service = parse_sdt(b_type, tsfile, debug)
     tsfile.seek(0)
-    events = parse_eit(service.service_id, tsfile, debug)
+    events = parse_eit(b_type, service, tsfile, debug)
     return (service, events)

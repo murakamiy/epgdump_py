@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 
 READ_PACKETS_MAX = 700000
+
+TYPE_DEGITAL = 1
+TYPE_BS = 2
+TYPE_CS = 3
+
 EIT_PID = (0x12, 0x26, 0x27)
 SDT_PID = (0x11,)
 

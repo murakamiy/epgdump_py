@@ -4,10 +4,13 @@ from parser import TransportStreamFile, parse_ts
 import xmltv
 import sys
 import getopt
+from constant import *
 
 def usage():
     print '''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
+       epgdump_py -b -i INPUT_FILE -o OUTPUT_FILE
   -h, --help        print help message
+  -b, --bs          output BS channel
   -c, --channel-id  specify channel identifier
   -d, --debug       parse all ts packet
   -f, --format      format xml
@@ -16,7 +19,7 @@ def usage():
 '''
 
 try: 
-    opts, args = getopt.getopt(sys.argv[1:], 'hc:dfi:o:', ['help', 'channel-id=', 'debug', 'format', 'input=', 'output='])
+    opts, args = getopt.getopt(sys.argv[1:], 'hbc:dfi:o:', ['help', 'bs', 'channel-id=', 'debug', 'format', 'input=', 'output='])
 except IndexError, getopt.GetoptError:
     usage()
     sys.exit(1)
@@ -26,10 +29,13 @@ input_file = None
 output_file = None
 pretty_print = False
 debug = False
+b_type = TYPE_DEGITAL
 for o,a in opts:
     if o in ('-h', '--help'):
         usage()
         sys.exit(0)
+    elif o in ('-b', '--bs'):
+        b_type = TYPE_BS
     elif o in ('-c', '--channel-id'):
         channel_id = a
     elif o in ('-d', '--debug'):
@@ -41,30 +47,17 @@ for o,a in opts:
     elif o in ('-o', '--output'):
         output_file = a
 
-if channel_id == None or input_file == None or output_file == None:
+if (b_type == TYPE_DEGITAL and channel_id == None) or input_file == None or output_file == None:
     usage()
     sys.exit(1)
 
 tsfile = TransportStreamFile(input_file, 'rb')
-(service, events) = parse_ts(tsfile, debug)
+(service, events) = parse_ts(b_type, tsfile, debug)
 tsfile.close()
-xmltv.create_xml(channel_id, service, events, output_file, pretty_print)
+xmltv.create_xml(b_type, channel_id, service, events, output_file, pretty_print)
 
-# print service
-# for desc in service.descriptors:
-#     print desc
-# 
 # for event in events:
-#     content = '\t' 
-#     item_desc = '\t'
-#     event_name = event.desc_short.event_name
-#     if event.desc_content != None:
-#         for ct in event.desc_content.content_type_array:
-#             content += 'L1=' + ct.content_nibble_level_1 + ' ' + 'L2=' + ct.content_nibble_level_2 + '\t\t'
-#     count = 1
-#     for (k,v) in event.desc_extend.items():
-#         item_desc += 'NAME' + str(count) + '=' + k + '\tDESC' + str(count) + '=' + v + '\t\t'
-#         count += 1
-# 
-#     print '%i %s %s %s %s' % (
-#             event.event_id, event.start_time, event_name, content, item_desc)
+#     print "%s %s %s" % (
+#             service[event.service_id],
+#             event.start_time,
+#             event.desc_short.event_name)
