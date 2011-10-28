@@ -170,7 +170,10 @@ def mjd2datetime(payload):
     hour = ((payload[2] & 0xF0) >> 4) * 10 + (payload[2] & 0x0F)
     minute = ((payload[3] & 0xF0) >> 4) * 10 + (payload[3] & 0x0F)
     second = ((payload[4] & 0xF0) >> 4) * 10 + (payload[4] & 0x0F)
-    return datetime.datetime(year, month, day, hour, minute, second)
+    try:
+        return datetime.datetime(year, month, day, hour, minute, second)
+    except ValueError:
+        return datetime.datetime(9999, 1, 1, 1, 1, 1)
 
 def bcd2time(payload):
     hour = ((payload[0] & 0xF0) >> 4) * 10 + (payload[0] & 0x0F)
