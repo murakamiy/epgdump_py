@@ -11,9 +11,8 @@ def get_text(text):
 
 def create_xml(b_type, channel_id, service, events, filename, pretty_print):
 
-
     channel_el_list = create_channel(b_type, channel_id, service)
-    programme_el_list = create_programme(channel_id, events)
+    programme_el_list = create_programme(channel_id, events, b_type)
     attr = {
             'generator-info-name':'epgdump_py',
             'generator-info-url':'mailto:epgdump_py@gmail.com'}
@@ -36,7 +35,7 @@ def create_xml(b_type, channel_id, service, events, filename, pretty_print):
 def create_channel(b_type, channel_id, service):
     el_list = []
     for (service_id, service_name) in service.items():
-        ch = str(service_id) if channel_id == None else channel_id
+        ch = b_type + str(service_id) if channel_id == None else channel_id
         attr = {'id':ch}
         channel_el = Element('channel', attr)
         attr = {'lang':'ja'}
@@ -57,12 +56,12 @@ def create_channel(b_type, channel_id, service):
 
     return el_list
 
-def create_programme(channel_id, events):
+def create_programme(channel_id, events, b_type):
     t_format = '%Y%m%d%H%M%S +0900'
     el_list = []
     for event in events:
 
-        ch = str(event.service_id) if channel_id == None else channel_id
+        ch = b_type + str(event.service_id) if channel_id == None else channel_id
         start = event.start_time.strftime(t_format)
         stop = (event.start_time + event.duration).strftime(t_format)
         attr = {'start':start, 'stop':stop, 'channel':ch}

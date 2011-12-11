@@ -9,8 +9,10 @@ from constant import *
 def usage():
     print '''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py -b -i INPUT_FILE -o OUTPUT_FILE
+       epgdump_py -s -i INPUT_FILE -o OUTPUT_FILE
   -h, --help        print help message
   -b, --bs          output BS channel
+  -s, --cs          output CS channel
   -c, --channel-id  specify channel identifier
   -d, --debug       parse all ts packet
   -f, --format      format xml
@@ -19,7 +21,7 @@ def usage():
 '''
 
 try: 
-    opts, args = getopt.getopt(sys.argv[1:], 'hbc:dfi:o:', ['help', 'bs', 'channel-id=', 'debug', 'format', 'input=', 'output='])
+    opts, args = getopt.getopt(sys.argv[1:], 'hbsc:dfi:o:', ['help', 'bs', 'cs', 'channel-id=', 'debug', 'format', 'input=', 'output='])
 except IndexError, getopt.GetoptError:
     usage()
     sys.exit(1)
@@ -36,6 +38,8 @@ for o,a in opts:
         sys.exit(0)
     elif o in ('-b', '--bs'):
         b_type = TYPE_BS
+    elif o in ('-s', '--cs'):
+        b_type = TYPE_CS
     elif o in ('-c', '--channel-id'):
         channel_id = a
     elif o in ('-d', '--debug'):
