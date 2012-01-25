@@ -9,10 +9,10 @@ from constant import *
 def get_text(text):
     return text.decode('utf-8') if text != None else ""
 
-def create_xml(b_type, channel_id, service, events, filename, pretty_print):
+def create_xml(b_type, channel_id, service, events, filename, pretty_print, output_eid):
 
     channel_el_list = create_channel(b_type, channel_id, service)
-    programme_el_list = create_programme(channel_id, events, b_type)
+    programme_el_list = create_programme(channel_id, events, b_type, output_eid)
     attr = {
             'generator-info-name':'epgdump_py',
             'generator-info-url':'mailto:epgdump_py@gmail.com'}
@@ -56,7 +56,7 @@ def create_channel(b_type, channel_id, service):
 
     return el_list
 
-def create_programme(channel_id, events, b_type):
+def create_programme(channel_id, events, b_type, output_eid):
     t_format = '%Y%m%d%H%M%S +0900'
     el_list = []
     for event in events:
@@ -91,6 +91,14 @@ def create_programme(channel_id, events, b_type):
                 category_el_2.text = get_text(ct.content_nibble_level_2)
                 programme_el.append(category_el_2)
                 break
+
+        if output_eid == True:
+            el = Element('service-id')
+            el.text = str(event.service_id)
+            programme_el.append(el)
+            el = Element('event-id')
+            el.text = str(event.event_id)
+            programme_el.append(el)
 
         el_list.append(programme_el)
 
