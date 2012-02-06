@@ -175,8 +175,9 @@ class EventInfomationTable:
             self.last_table_id)
 
 class Event:
-    def __init__(self, service_id, event_id, start_time, duration,
+    def __init__(self, transport_stream_id, service_id, event_id, start_time, duration,
             running_status, free_CA_mode, descriptors_loop_length):
+        self.transport_stream_id = transport_stream_id
         self.service_id = service_id
         self.event_id = event_id
         self.start_time = start_time

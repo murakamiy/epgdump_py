@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import sys
 import datetime
 import copy
 import array
@@ -54,7 +55,7 @@ class TransportPacketParser:
                             t_packet = TransportPacket(header, section.data)
                             self.queue.append(t_packet)
                         except CRC32MpegError, e:
-                            print 'CRC32MpegError', e
+                            print >> sys.stderr, 'CRC32MpegError', e
                             self.section_map.pop(header.pid)
                             break
 
@@ -74,17 +75,13 @@ class TransportPacketParser:
             if sect.length_total == 0:
                 section_length = 180
                 if header.pointer_field > 179:
-    #                 print 'section 01 header.pointer_field > 179'
                     next_packet = True
                     sect = None
                 else:
-    #                 if header.pointer_field > 0:
-    #                     print 'pointer_field %i' % header.pointer_field
                     sect.idx += header.pointer_field
                     section_length -= header.pointer_field
                     sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
                     if sect.length_total < 15:
-    #                     print 'section 02 section_length < 15'
                         next_packet = True
                         sect = None
                     elif sect.length_total <= section_length:
@@ -92,14 +89,12 @@ class TransportPacketParser:
                         sect.idx += sect.length_total + 3
                         sect.length_current += sect.length_total
                         section_map[header.pid] = sect
-    #                     print 'section 03 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                         next_packet = False
                     else:
                         sect.data.extend(b_packet[sect.idx:])
                         sect.length_current += section_length
                         sect.idx = 5
                         section_map[header.pid] = sect
-    #                     print 'section 04 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                         next_packet = True
                         sect = None
             else:
@@ -120,14 +115,12 @@ class TransportPacketParser:
                             sect.length_total = (((b_packet[sect.idx + 1] & 0x0F) << 8) + b_packet[sect.idx + 2]) # 12 uimsbf
                             section_map[header.pid] = sect
                             next_packet = False
-    #                 print 'section 05 %04i %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain, sect.length_prev)
                     sect = None
                 elif remain <= section_length:
                     sect.data.extend(b_packet[sect.idx:sect.idx + 3 + remain])
                     sect.idx += remain
                     sect.length_current += remain
                     section_map[header.pid] = sect
-    #                 print 'section 06 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                     next_packet = False
                 else:
                     sect.data.extend(b_packet[sect.idx:])
@@ -135,7 +128,6 @@ class TransportPacketParser:
                     sect.length_prev = 0
                     sect.idx = 5
                     section_map[header.pid] = sect
-    #                 print 'section 07 %04i %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx, remain)
                     next_packet = True
                     sect = None
         else:
@@ -145,16 +137,13 @@ class TransportPacketParser:
                 sect.length_current += 184
                 if sect.length_current >= sect.length_total:
                     section_map[header.pid] = Section()
-    #                 print 'section 08 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     next_packet = False
                 else:
                     sect.length_prev = 0
-    #                 print 'section 09 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                     sect = None
                     next_packet = True
             else:
                 sect.length_prev = 0
-    #             print 'section 10 %04i %04i %04i' % (sect.length_total, sect.length_current, sect.idx)
                 sect = None
                 next_packet = True
         return (next_packet, sect)
@@ -295,8 +284,8 @@ def parseEvents(t_packet, b_packet):
         running_status = (b_packet[idx + 10] >> 5)            # 3   uimsbf
         free_CA_mode = ((b_packet[idx + 10] >> 4) & 0x01)     # 1   bslbf
         descriptors_loop_length = ((b_packet[idx + 10] & 0x0F) << 8) + b_packet[idx + 11] # 12  uimsbf
-        event = Event(t_packet.eit.service_id, event_id, start_time, duration,
-                running_status, free_CA_mode, descriptors_loop_length)
+        event = Event(t_packet.eit.transport_stream_id, t_packet.eit.service_id, event_id,
+                start_time, duration, running_status, free_CA_mode, descriptors_loop_length)
         parseDescriptors(idx + 12, event, t_packet, b_packet)
         t_packet.eit.events.append(event)
         idx = idx + 12 + descriptors_loop_length
@@ -383,7 +372,7 @@ def parse_eit(b_type, service, tsfile, debug):
         if t_packet.eit.service_id in ids:
             parseEvents(t_packet, t_packet.binary_data)
             add_event(event_map, t_packet)
-    print "EIT: %i packets read" % (parser.count)
+    print >> sys.stderr, "EIT: %i packets read" % (parser.count)
     event_list = event_map.values()
     event_list.sort(compare_event if b_type == TYPE_DEGITAL else compare_service)
     event_list = fix_events(event_list)
@@ -402,7 +391,7 @@ def parse_sdt(b_type, tsfile, debug):
                 service_map[service.service_id] = service.descriptors[0].service_name
         if b_type == TYPE_DEGITAL:
             break
-    print "SDT: %i packets read" % (parser.count)
+    print >> sys.stderr, "SDT: %i packets read" % (parser.count)
     return service_map
 
 def parse_ts(b_type, tsfile, debug):

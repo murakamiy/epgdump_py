@@ -8,20 +8,20 @@ import time
 from constant import *
 
 def usage():
-    print '''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
+    print >> sys.stderr, '''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py -b -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py -s -i INPUT_FILE -o OUTPUT_FILE
-       epgdump_py -p SERVICE_ID:EVENT_ID -i INPUT_FILE
+       epgdump_py [-b|-s] -p TRANSPORT_STREAM_ID:SERVICE_ID:EVENT_ID -i INPUT_FILE
   -h, --help        print help message
-  -b, --bs          output BS channel
-  -s, --cs          output CS channel
+  -b, --bs          input file is BS channel
+  -s, --cs          input file is CS channel
   -c, --channel-id  specify channel identifier
   -d, --debug       parse all ts packet
   -f, --format      format xml
   -i, --input       specify ts file
   -o, --output      specify xml file
   -p, --print-time  print start time, and end time of specifeid id
-  -e, --event-id    output servece_id and event_id
+  -e, --event-id    output transport_stream_id, servece_id and event_id
 '''
 
 try: 
@@ -36,6 +36,7 @@ output_file = None
 pretty_print = False
 debug = False
 b_type = TYPE_DEGITAL
+transport_stream_id = None
 service_id = None
 event_id = None
 output_eid = False
@@ -59,8 +60,9 @@ for o,a in opts:
         output_file = a
     elif o in ('-p', '--print-time'):
         arr = a.split(':')
-        service_id = int(arr[0])
-        event_id = int(arr[1])
+        transport_stream_id = int(arr[0])
+        service_id = int(arr[1])
+        event_id = int(arr[2])
     elif o in ('-e', '--event-id'):
         output_eid = True
 
@@ -81,17 +83,14 @@ else:
     start_time = None
     end_time = None
     for event in events:
-        if event.service_id == service_id and event.event_id == event_id:
+        if (event.transport_stream_id == transport_stream_id and
+            event.service_id == service_id and
+            event.event_id == event_id):
             start_time = event.start_time
             end_time = event.start_time + event.duration
             break
     if start_time == None:
-        print "not found: service_id=%d event_id=%d" % (service_id, event_id)
+        print >> sys.stderr, "not found: transport_stream_id=%d service_id=%d event_id=%d" % (transport_stream_id, service_id, event_id)
+        sys.exit(1)
     else:
         print int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple()))
-
-# for event in events:
-#     print "%s %s %s" % (
-#             service[event.service_id],
-#             event.start_time,
-#             event.desc_short.event_name)

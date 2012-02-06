@@ -93,6 +93,9 @@ def create_programme(channel_id, events, b_type, output_eid):
                 break
 
         if output_eid == True:
+            el = Element('transport-stream-id')
+            el.text = str(event.transport_stream_id)
+            programme_el.append(el)
             el = Element('service-id')
             el.text = str(event.service_id)
             programme_el.append(el)
