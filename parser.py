@@ -320,7 +320,7 @@ def add_event(event_map, t_packet):
             tag = desc.descriptor_tag
             if tag == TAG_SED:
                 master.desc_short = desc
-            if tag == TAG_CD:
+            elif tag == TAG_CD:
                 master.desc_content = desc
             elif tag == TAG_EED:
                 if master.desc_extend == None:
