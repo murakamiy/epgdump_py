@@ -244,6 +244,24 @@ def parseContentDescriptor(idx, event, t_packet, b_packet):
     desc = ContentDescriptor(descriptor_tag, descriptor_length, content_list)
     event.descriptors.append(desc)
 
+def parseEventGroupDescriptor(idx, event, t_packet, b_packet):
+    descriptor_tag = b_packet[idx]        # 8 uimsbf
+    descriptor_length = b_packet[idx + 1] # 8 uimsbf
+    group_type = (b_packet[idx + 2] >> 4) # 4 uimsbf
+    event_count = (b_packet[idx + 2] & 0x0F) # 4 uimsbf
+    idx += 3
+    event_list = []
+    i = 0
+    while i < event_count:
+        service_id = (b_packet[idx] << 8) + b_packet[idx + 1] # 16 uimsbf
+        event_id = (b_packet[idx + 2] << 8) + b_packet[idx + 3]   # 16  uimsbf
+        event_list.append((service_id, event_id))
+        i += 1
+        idx += 4
+    desc = EventGroupDescriptor(descriptor_tag, descriptor_length, group_type,
+            event_count, event_list)
+    event.descriptors.append(desc)
+
 def parseServiceDescriptor(idx, service, t_packet, b_packet):
     descriptor_tag = b_packet[idx]        # 8 uimsbf
     descriptor_length = b_packet[idx + 1] # 8 uimsbf
@@ -265,7 +283,8 @@ def parseDescriptors(idx, table, t_packet, b_packet):
             TAG_SED:parseShortEventDescriptor,
             TAG_EED:parseExtendedEventDescriptor,
             TAG_CD :parseContentDescriptor,
-            TAG_SD :parseServiceDescriptor}
+            TAG_SD :parseServiceDescriptor,
+            TAG_EGD:parseEventGroupDescriptor}
     length = idx + table.descriptors_loop_length
     while idx < length:
         descriptor_tag = b_packet[idx]        # 8   uimsbf
@@ -320,13 +339,15 @@ def add_event(event_map, t_packet):
             tag = desc.descriptor_tag
             if tag == TAG_SED:
                 master.desc_short = desc
-            if tag == TAG_CD:
+            elif tag == TAG_CD:
                 master.desc_content = desc
             elif tag == TAG_EED:
                 if master.desc_extend == None:
                     master.desc_extend = desc.items
                 else:
                     master.desc_extend.extend(desc.items)
+            elif tag == TAG_EGD:
+                master.desc_group = desc
 
 def fix_events(events):
     event_list = []

@@ -103,6 +103,23 @@ def create_programme(channel_id, events, b_type, output_eid):
             el.text = str(event.event_id)
             programme_el.append(el)
 
+#             if event.desc_group != None:
+#                 elp = Element('event-group')
+#                 el = Element('group-type')
+#                 el.text = str(event.desc_group.group_type)
+#                 elp.append(el)
+#                 el = Element('event-count')
+#                 el.text = str(event.desc_group.event_count)
+#                 elp.append(el)
+#                 for (service_id, event_id) in event.desc_group.event_list:
+#                     el = Element('service-id')
+#                     el.text = str(service_id)
+#                     elp.append(el)
+#                     el = Element('event-id')
+#                     el.text = str(event_id)
+#                     elp.append(el)
+#                 programme_el.append(elp)
+
         el_list.append(programme_el)
 
     return el_list

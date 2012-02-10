@@ -189,6 +189,7 @@ class Event:
         self.desc_short = None
         self.desc_content = None
         self.desc_extend = None
+        self.desc_group = None
     def __str__(self):
         return (
         '  service_id=%i\n'
@@ -204,6 +205,21 @@ class Event:
             self.running_status,
             self.free_CA_mode,
             self.descriptors_loop_length)
+
+class EventGroupDescriptor:
+    def __init__(self, descriptor_tag, descriptor_length, group_type,
+           event_count, event_list):
+        self.descriptor_tag = descriptor_tag
+        self.descriptor_length = descriptor_length
+        self.group_type = group_type
+        self.event_count = event_count
+        self.event_list = event_list
+    def __str__(self):
+        return (
+        '   descriptor_tag=0x%02X\n'
+        '   descriptor_length=%i\n') % (
+                self.descriptor_tag,
+                self.descriptor_length)
 
 class ContentDescriptor:
     def __init__(self, descriptor_tag, descriptor_length, content_type_array):

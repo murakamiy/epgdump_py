@@ -14,6 +14,7 @@ TAG_SED = 0x4D # Short event descriptor
 TAG_EED = 0x4E # Extended event descriptor
 TAG_CD  = 0x54 # Content descriptor
 TAG_SD  = 0x48 # Service descriptor
+TAG_EGD = 0xD6 # Event group descriptor
 
 CONTENT_TYPE = {
         0x0:('ニュース／報道',
