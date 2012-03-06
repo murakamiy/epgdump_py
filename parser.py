@@ -320,6 +320,8 @@ def add_event(b_type, event_map, t_packet):
             master = copy.copy(event)
             master.descriptors = None
             event_map[m_id] = master
+        elif event.service_id < master.service_id:
+            master.service_id = event.service_id
         for desc in event.descriptors:
             tag = desc.descriptor_tag
             if tag == TAG_SED:
