@@ -309,13 +309,17 @@ def parseService(t_packet, b_packet):
         t_packet.sdt.services.append(service)
         idx = idx + 5 + descriptors_loop_length
 
-def add_event(event_map, t_packet):
+def add_event(b_type, event_map, t_packet):
     for event in t_packet.eit.events:
-        master = event_map.get(event.event_id)
+        if b_type == TYPE_DEGITAL:
+            m_id = event.event_id
+        else:
+            m_id = (event.transport_stream_id << 32) + (event.service_id << 16) + event.event_id
+        master = event_map.get(m_id)
         if master == None:
             master = copy.copy(event)
             master.descriptors = None
-            event_map[event.event_id] = master
+            event_map[m_id] = master
         for desc in event.descriptors:
             tag = desc.descriptor_tag
             if tag == TAG_SED:
@@ -371,7 +375,7 @@ def parse_eit(b_type, service, tsfile, debug):
     for t_packet in parser:
         if t_packet.eit.service_id in ids:
             parseEvents(t_packet, t_packet.binary_data)
-            add_event(event_map, t_packet)
+            add_event(b_type, event_map, t_packet)
     print >> sys.stderr, "EIT: %i packets read" % (parser.count)
     event_list = event_map.values()
     event_list.sort(compare_event if b_type == TYPE_DEGITAL else compare_service)
