@@ -83,15 +83,18 @@ def create_programme(channel_id, events, b_type, output_eid):
         programme_el.append(desc_el)
 
         if event.desc_content != None:
+            category_list = []
             for ct in event.desc_content.content_type_array:
+                category_text = get_text(ct.content_nibble_level_1)
+                if category_text not in category_list and category_text != 'UNKNOWN':
+                    category_list.append(category_text)
+                category_text = get_text(ct.content_nibble_level_2)
+                if category_text not in category_list and category_text != 'UNKNOWN':
+                    category_list.append(category_text)
+            for category_text in category_list:
                 category_el_1 = Element('category', attr)
-                category_el_1.text = get_text(ct.content_nibble_level_1)
+                category_el_1.text = category_text
                 programme_el.append(category_el_1)
-                category_el_2 = Element('category', attr)
-                category_el_2.text = get_text(ct.content_nibble_level_2)
-                programme_el.append(category_el_2)
-                break
-
         if output_eid == True:
             el = Element('transport-stream-id')
             el.text = str(event.transport_stream_id)
